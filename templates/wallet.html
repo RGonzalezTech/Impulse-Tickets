@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+
+{% block title %}{{ wallet.name }} - Ticket App{% endblock %}
+
+{% block content %}
+    <h1>{{ wallet.name }}'s Wallet</h1>
+
+    <h2>Available Tickets</h2>
+    <ul>
+        {% for ticket in tickets %}
+            {% if not ticket.consumed_date %}
+                <li>
+                    {{ ticket.ticket_type.name }} (Issued: {{ ticket.issued_date.strftime('%Y-%m-%d %H:%M') }})
+                    <form action="{{ url_for('consume_ticket', ticket_id=ticket.id) }}" method="POST" style="display: inline;">
+                        <button type="submit">Consume</button>
+                    </form>
+                </li>
+            {% endif %}
+        {% else %}
+            <li>No available tickets.</li>
+        {% endfor %}
+    </ul>
+
+     <a href="{{ url_for('index') }}">Back to Dashboard</a>
+{% endblock %}

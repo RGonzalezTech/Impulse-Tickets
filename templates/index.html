@@ -1,0 +1,70 @@
+{% extends "_base.html" %}
+
+{% block title %}Dashboard - Ticket App{% endblock %}
+
+{% block content %}
+    <h1>Ticket Dashboard</h1>
+
+    <section>
+        <h2>Wallets</h2>
+        <ul>
+            {% for wallet in wallets %}
+            <li>
+                <a href="{{ url_for('view_wallet', wallet_id=wallet.id) }}">{{ wallet.name }}</a>
+                 <form action="{{ url_for('delete_wallet', wallet_id=wallet.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this wallet? This cannot be undone.');">&times;</button>
+                </form>
+            </li>
+            {% else %}
+            <li>No wallets yet.</li>
+            {% endfor %}
+        </ul>
+        <form action="{{ url_for('add_wallet') }}" method="POST">
+            <h3>Add New Wallet</h3>
+            <input type="text" name="wallet_name" placeholder="Wallet Name" required>
+            <button type="submit">Add Wallet</button>
+        </form>
+    </section>
+
+    <hr>
+
+    <section>
+        <h2>Ticket Types</h2>
+         <ul>
+            {% for tt in ticket_types %}
+            <li>
+                <strong>{{ tt.name }}</strong> {% if tt.description %}- {{ tt.description }}{% endif %}
+                (Distributes {{ tt.distribute_quantity }} every {{ tt.frequency_value }} {{ tt.frequency_unit.value }}
+                {% if tt.target_wallet %} to {{ tt.target_wallet.name }} {% else %} [No Target Wallet] {% endif %})
+                <form action="{{ url_for('delete_ticket_type', type_id=tt.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this ticket type? This cannot be undone.');">&times;</button>
+                </form>
+            </li>
+            {% else %}
+            <li>No ticket types yet.</li>
+            {% endfor %}
+        </ul>
+
+        <form action="{{ url_for('add_ticket_type') }}" method="POST">
+             <h3>Add New Ticket Type</h3>
+             <input type="text" name="ticket_name" placeholder="Ticket Type Name" required><br>
+             <input type="text" name="ticket_description" placeholder="Description (Optional)"><br>
+             <label>Distribute:</label>
+             <input type="number" name="distribute_quantity" value="1" min="1" required> tickets<br>
+             <label>Frequency:</label>
+             Every <input type="number" name="frequency_value" value="7" min="1" required>
+             <select name="frequency_unit" required>
+                 <option value="days">Days</option>
+                 <option value="weeks">Weeks</option>
+                 </select><br>
+             <label>Assign to Wallet (Optional):</label>
+             <select name="target_wallet_id">
+                 <option value="0">-- None --</option> {# Or handle None value appropriately #}
+                 {% for wallet in wallets %}
+                 <option value="{{ wallet.id }}">{{ wallet.name }}</option>
+                 {% endfor %}
+             </select><br>
+             <button type="submit">Add Ticket Type</button>
+         </form>
+    </section>
+{% endblock %}
