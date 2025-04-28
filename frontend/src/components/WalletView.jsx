@@ -29,7 +29,7 @@ function WalletView({
     // --- Existing Calculation Functions (Unchanged) ---
     const calculateRotation = (index, total) => {
         if (total <= 1) return 0;
-        const maxAngle = Math.min(total * 5, 45);
+        const maxAngle = Math.min(total * 7, 70);
         const anglePerCard = maxAngle / (total - 1);
         const baseAngle = -maxAngle / 2;
         return baseAngle + index * anglePerCard;
@@ -38,7 +38,7 @@ function WalletView({
     const calculateTranslation = (index, total) => {
         if (total <= 1) return { x: 0, y: 0 };
         const angleRad = (calculateRotation(index, total) * Math.PI) / 180;
-        const radius = 100;
+        const radius = 145;
         const yOffsetFactor = 0.3;
         const x = radius * Math.sin(angleRad);
         const y = radius * (1 - Math.cos(angleRad)) * yOffsetFactor;
