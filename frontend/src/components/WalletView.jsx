@@ -179,8 +179,8 @@ function WalletView({
                                     y: y,
                                     transition: { type: 'spring', stiffness: 100, damping: 15, delay: index * 0.05 }
                                 }}
-                                initial={{ opacity: 0, rotate: 0, x: 0, y: 50 }}
-                                exit={{ opacity: 0, scale: 0.5, y: -100, transition: { duration: 0.4, ease: "easeIn" } }}
+                                initial={{ rotate: 0, x: 0, y: 50 }}
+                                exit={{ scale: 0.5, y: -100, transition: { duration: 0.4, ease: "easeIn" } }}
                                 layout
                             />
                         );

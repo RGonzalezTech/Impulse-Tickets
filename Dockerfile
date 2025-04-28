@@ -33,12 +33,5 @@ RUN mkdir -p /app/data
 # Expose the port Nginx will listen on (defined in nginx.conf)
 EXPOSE 80
 
-# Command to run Gunicorn (running Flask app) and Nginx
-# Use a simple script or run directly. Gunicorn runs in the background (&),
-# and Nginx stays in the foreground.
-CMD bash -c "echo 'Starting Gunicorn...' && \
-             (gunicorn --bind 127.0.0.1:8000 --workers=4 app:app &) && \
-             echo 'Initializing database...' && \
-             (sleep 5 && python -c 'from app import initialize_database; initialize_database()') & \
-             echo 'Starting Nginx...' && \
+CMD bash -c "(gunicorn --bind 127.0.0.1:8000 --workers=1 app:app &) && \
              nginx -g 'daemon off;'"
