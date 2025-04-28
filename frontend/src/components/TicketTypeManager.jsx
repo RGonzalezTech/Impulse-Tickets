@@ -10,6 +10,7 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
     const [error, setError] = useState(null);
 
     // Form state
+    const [editingTypeId, setEditingTypeId] = useState(null); // ID of the type being edited
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [quantity, setQuantity] = useState(1);
@@ -62,50 +63,88 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
         }
     };
 
-
-    // Add Ticket Type
-    const handleAddTicketType = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
         setError(null);
 
-        const newTicketType = {
+        const ticketTypeData = {
             name,
-            description: description || null, // Send null if empty
+            description: description || null,
             distribute_quantity: parseInt(quantity, 10),
             frequency_value: parseInt(freqValue, 10),
             frequency_unit: freqUnit,
             target_wallet_id: targetWalletId ? parseInt(targetWalletId, 10) : null,
         };
 
+        const isEditing = editingTypeId !== null;
+        const url = isEditing ? `${apiBaseUrl}/ticket-types/${editingTypeId}` : `${apiBaseUrl}/ticket-types`;
+        const method = isEditing ? 'PUT' : 'POST';
+
         try {
-            const response = await fetch(`${apiBaseUrl}/ticket-types`, {
-                method: 'POST',
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newTicketType),
+                body: JSON.stringify(ticketTypeData),
             });
-            const data = await response.json();
+            const data = await response.json(); // Assuming API returns updated/created object
+
             if (!response.ok) {
-                throw new Error(data.error || `HTTP error! status: ${response.status}`);
+                // Improved error handling: check for specific backend error messages
+                let errorMsg = data.error || (data.errors ? JSON.stringify(data.errors) : `HTTP error! status: ${response.status}`);
+                throw new Error(errorMsg);
             }
-            // Add to local state and clear form
-            setTicketTypes(currentTypes => [...currentTypes, data]);
-            setName('');
-            setDescription('');
-            setQuantity(1);
-            setFreqValue(7);
-            setFreqUnit(frequencyUnits[0]);
-            setTargetWalletId('');
-            // Optionally call onTicketTypesUpdated()
+
+            if (isEditing) {
+                // Update the type in the local state
+                setTicketTypes(currentTypes =>
+                    currentTypes.map(tt => (tt.id === editingTypeId ? data : tt))
+                );
+                // Reset editing state after successful update
+                handleCancelEdit(); // Call reset function (defined below)
+
+            } else {
+                // Add the new type to the local state
+                setTicketTypes(currentTypes => [...currentTypes, data]);
+                resetForm(); // Reset form fields only for adding
+            }
 
         } catch (err) {
-            console.error("Failed to add ticket type:", err);
-            setError(err.message || "Could not add ticket type.");
+            console.error(`Failed to ${isEditing ? 'update' : 'add'} ticket type:`, err);
+            setError(err.message || `Could not ${isEditing ? 'update' : 'add'} ticket type.`);
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    // Helper to reset form fields
+    const resetForm = () => {
+        setName('');
+        setDescription('');
+        setQuantity(1);
+        setFreqValue(7);
+        setFreqUnit(frequencyUnits[0]); // Or your default
+        setTargetWalletId('');
+    }
+
+    // Helper to cancel editing and reset form
+    const handleCancelEdit = () => {
+        setEditingTypeId(null);
+        resetForm();
+        setError(null); // Clear errors
+    };
+
+    // Add this function inside the TicketTypeManager component:
+    const handleEditClick = (ticketType) => {
+        setEditingTypeId(ticketType.id);
+        setName(ticketType.name);
+        setDescription(ticketType.description || ''); // Handle null description
+        setQuantity(ticketType.distribute_quantity);
+        setFreqValue(ticketType.frequency_value);
+        setFreqUnit(ticketType.frequency_unit); // Ensure this matches the value from API
+        setTargetWalletId(ticketType.target_wallet_id !== null ? String(ticketType.target_wallet_id) : ''); // Handle null and convert to string for select
+        setError(null); // Clear previous errors
+    };
 
     // Fetch on mount
     useEffect(() => {
@@ -118,9 +157,8 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
 
             {error && <p className={styles.errorText}>{error} <button onClick={() => setError(null)} className={styles.dismissError}>&times;</button></p>}
 
-            {/* Add New Ticket Type Form */}
-            <form onSubmit={handleAddTicketType} className={styles.addForm}>
-                <h3>Add New Type</h3>
+            <form onSubmit={handleSubmit} className={styles.addForm}>
+                <h3>{editingTypeId ? 'Edit Ticket Type' : 'Add New Type'}</h3>
                 <div className={styles.formGrid}>
                     <label>Name*:</label>
                     <input type="text" value={name} onChange={e => setName(e.target.value)} required />
@@ -142,15 +180,21 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
 
                     <label>Target Wallet:</label>
                     <select value={targetWalletId} onChange={e => setTargetWalletId(e.target.value)}>
-                        <option value="">(None - Manual Distribution)</option>
                         {wallets.map(wallet => (
                             <option key={wallet.id} value={wallet.id}>{wallet.name}</option>
                         ))}
                     </select>
                 </div>
-                <button type="submit" disabled={isSubmitting || !name.trim() || !quantity || !freqValue}>
-                    {isSubmitting ? 'Adding...' : 'Add Ticket Type'}
-                </button>
+                <div className={styles.formActions}>
+                    <button type="submit" disabled={isSubmitting || !name.trim() /* ... other validations */}>
+                        {isSubmitting ? (editingTypeId ? 'Saving...' : 'Adding...') : (editingTypeId ? 'Save Changes' : 'Add Ticket Type')}
+                    </button>
+                    {editingTypeId && ( // Show Cancel button only when editing
+                        <button type="button" onClick={handleCancelEdit} disabled={isSubmitting}>
+                            Cancel Edit
+                        </button>
+                    )}
+                </div>
             </form>
 
             {/* List Existing Ticket Types */}
@@ -169,9 +213,17 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
                                     Target: {tt.target_wallet_name || '(None)'}
                                 </span>
                             </div>
-                            <button onClick={() => deleteTicketType(tt.id)} className={styles.deleteButton}>
-                                Delete
-                            </button>
+                            <div className={styles.buttonGroup}>
+                                <button
+                                    onClick={() => handleEditClick(tt)}
+                                    className={styles.editButton}
+                                >
+                                    Edit
+                                </button>
+                                <button onClick={() => deleteTicketType(tt.id)} className={styles.deleteButton}>
+                                    Delete
+                                </button>
+                            </div>
                         </li>
                     ))}
                 </ul>

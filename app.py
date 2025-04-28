@@ -99,6 +99,120 @@ class IssuedTicket(db.Model):
 		status = "Consumed" if self.consumed_date else "Available"
 		return f'<IssuedTicket {self.id} ({self.ticket_type.name}) for {self.wallet.name} - {status}>'
 
+# --- Validation Helpers ---
+
+def validate_wallet_name(name, existing_wallet_id=None):
+	"""Validates wallet name: required, non-empty string, unique (unless it's the existing wallet)."""
+	if not name or not isinstance(name, str) or not name.strip():
+		return jsonify({"error": "Wallet name is required and must be a non-empty string"}), 400
+
+	query = Wallet.query.filter(Wallet.name == name)
+	if existing_wallet_id is not None:
+		query = query.filter(Wallet.id != existing_wallet_id)
+
+	existing_wallet = query.first()
+	if existing_wallet:
+		return jsonify({"error": f"Wallet name '{name}' already exists"}), 409 # Conflict
+	return None # No error
+
+def validate_ticket_type_data(data, existing_type_id=None):
+	"""Validates data for creating/updating a TicketType. Returns (validated_data, error_response)."""
+	errors = {}
+	validated_data = {}
+
+	# --- Field Extraction (with defaults for update) ---
+	# For updates, get existing values if not provided in data
+	existing_type = None
+	if existing_type_id:
+		existing_type = TicketType.query.get(existing_type_id)
+		if not existing_type:
+			 # This should ideally be checked before calling validate, but added here for safety
+			 return None, (jsonify({"error": "Ticket Type not found"}), 404)
+
+	# Helper to get value from data or existing object
+	def get_value(key, default_value=None):
+		 if key in data:
+			 return data[key]
+		 if existing_type:
+			 # Adjust for potential differences in attribute vs data key names if needed
+			 if key == 'frequency_unit':
+				 return getattr(existing_type, key).value # Get enum value
+			 return getattr(existing_type, key)
+		 return default_value
+
+	name = get_value('name')
+	description = get_value('description', None) # Optional
+	quantity = get_value('distribute_quantity')
+	freq_val = get_value('frequency_value')
+	freq_unit_str = get_value('frequency_unit')
+	target_wallet_id = get_value('target_wallet_id', None) # Optional, allow null
+
+
+	# --- Validation ---
+
+	# Name
+	if not isinstance(name, str) or not name.strip():
+		errors['name'] = "Invalid 'name' (must be non-empty string)"
+	else:
+		# Check uniqueness
+		name_query = TicketType.query.filter(TicketType.name == name)
+		if existing_type_id is not None:
+			name_query = name_query.filter(TicketType.id != existing_type_id)
+		if name_query.first():
+			errors['name'] = f"Ticket Type name '{name}' already exists"
+		else:
+			validated_data['name'] = name
+
+	# Description (optional, just check type if provided)
+	if description is not None and not isinstance(description, str):
+		 errors['description'] = "Invalid 'description' (must be string or null)"
+	else:
+		 validated_data['description'] = description # Allow null/empty
+
+	# Quantity
+	if not isinstance(quantity, int) or quantity < 1:
+		errors['distribute_quantity'] = "Invalid 'distribute_quantity' (must be integer >= 1)"
+	else:
+		 validated_data['distribute_quantity'] = quantity
+
+	# Frequency Value
+	if not isinstance(freq_val, int) or freq_val < 1:
+		errors['frequency_value'] = "Invalid 'frequency_value' (must be integer >= 1)"
+	else:
+		 validated_data['frequency_value'] = freq_val
+
+	# Frequency Unit
+	if freq_unit_str is None:
+		 errors['frequency_unit'] = "Missing required field: 'frequency_unit'"
+	else:
+		try:
+			freq_unit = FrequencyUnit(freq_unit_str)
+			validated_data['frequency_unit'] = freq_unit
+		except ValueError:
+			valid_units = [unit.value for unit in FrequencyUnit]
+			errors['frequency_unit'] = f"Invalid 'frequency_unit'. Must be one of: {valid_units}"
+
+	# Target Wallet ID
+	target_wallet = None
+	if target_wallet_id is not None:
+		if not isinstance(target_wallet_id, int):
+			errors['target_wallet_id'] = "Invalid 'target_wallet_id' (must be integer or null)"
+		else:
+			target_wallet = Wallet.query.get(target_wallet_id)
+			if not target_wallet:
+				errors['target_wallet_id'] = f"Target wallet ID {target_wallet_id} not found"
+			else:
+				validated_data['target_wallet_id'] = target_wallet.id
+	else:
+		 validated_data['target_wallet_id'] = None # Explicitly allow null
+
+
+	if errors:
+		# Return multiple errors if present
+		return None, (jsonify({"errors": errors}), 400)
+
+	return validated_data, None # Return validated data and no error
+
 # --- Scheduler ---
 # scheduler = BackgroundScheduler(daemon=True)
 
@@ -149,10 +263,10 @@ def add_wallet():
 	if not data or not data.get('name'):
 		return jsonify({"error": "Wallet name is required"}), 400
 
-	name = data['name']
-	existing_wallet = Wallet.query.filter_by(name=name).first()
-	if existing_wallet:
-		return jsonify({"error": f"Wallet '{name}' already exists"}), 409 # 409 Conflict
+	name = data.get('name')
+	error_response = validate_wallet_name(name)
+	if error_response:
+		return error_response
 
 	new_wallet = Wallet(name=name)
 	db.session.add(new_wallet)
@@ -176,6 +290,27 @@ def delete_wallet(wallet_id):
 	db.session.commit()
 	return jsonify({"message": f"Wallet '{wallet.name}' deleted successfully"}), 200
 
+# Edit Wallet
+@app.route('/api/wallets/<int:wallet_id>', methods=['PUT'])
+def update_wallet(wallet_id):
+	"""Updates an existing wallet."""
+	wallet = Wallet.query.get(wallet_id)
+	if not wallet:
+		return jsonify({"error": "Wallet not found"}), 404
+
+	data = request.get_json()
+	if not data:
+		return jsonify({"error": "Invalid JSON data"}), 400
+
+	new_name = data.get('name')
+	error_response = validate_wallet_name(new_name, existing_wallet_id=wallet_id)
+	if error_response:
+		return error_response
+
+	wallet.name = new_name
+	db.session.commit()
+	return jsonify(wallet.to_dict()), 200
+
 # Ticket Types
 @app.route('/api/ticket-types', methods=['GET'])
 def get_ticket_types():
@@ -195,52 +330,37 @@ def add_ticket_type():
 	if not all(field in data for field in required_fields):
 		return jsonify({"error": f"Missing required fields: {required_fields}"}), 400
 
-	name = data['name']
-	description = data.get('description') # Optional
-	quantity = data['distribute_quantity']
-	freq_val = data['frequency_value']
-	freq_unit_str = data['frequency_unit']
-	target_wallet_id = data.get('target_wallet_id') # Optional
+	validated_data, error_response = validate_ticket_type_data(data)
+	if error_response:
+		return error_response
 
-	# Type/Value Validation
-	if not isinstance(name, str) or not name.strip():
-		return jsonify({"error": "Invalid 'name'"}), 400
-	if not isinstance(quantity, int) or quantity < 1:
-		return jsonify({"error": "Invalid 'distribute_quantity' (must be integer >= 1)"}), 400
-	if not isinstance(freq_val, int) or freq_val < 1:
-		return jsonify({"error": "Invalid 'frequency_value' (must be integer >= 1)"}), 400
-
-	try:
-		freq_unit = FrequencyUnit(freq_unit_str)
-	except ValueError:
-		valid_units = [unit.value for unit in FrequencyUnit]
-		return jsonify({"error": f"Invalid 'frequency_unit'. Must be one of: {valid_units}"}), 400
-
-	# Check if name exists
-	existing_type = TicketType.query.filter_by(name=name).first()
-	if existing_type:
-		return jsonify({"error": f"Ticket Type '{name}' already exists"}), 409
-
-	# Check target wallet if provided
-	target_wallet = None
-	if target_wallet_id is not None:
-		if not isinstance(target_wallet_id, int):
-			 return jsonify({"error": "Invalid 'target_wallet_id' (must be integer or null)"}), 400
-		target_wallet = Wallet.query.get(target_wallet_id)
-		if not target_wallet:
-			return jsonify({"error": f"Target wallet ID {target_wallet_id} not found"}), 404
-
-	new_type = TicketType(
-		name=name,
-		description=description,
-		distribute_quantity=quantity,
-		frequency_value=freq_val,
-		frequency_unit=freq_unit,
-		target_wallet_id=target_wallet.id if target_wallet else None
-	)
+	new_type = TicketType(**validated_data)
 	db.session.add(new_type)
 	db.session.commit()
 	return jsonify(new_type.to_dict()), 201
+
+# Edit Ticket Type
+@app.route('/api/ticket-types/<int:type_id>', methods=['PUT'])
+def update_ticket_type(type_id):
+	"""Updates an existing ticket type."""
+	ticket_type = TicketType.query.get(type_id)
+	if not ticket_type:
+		return jsonify({"error": "Ticket Type not found"}), 404
+
+	data = request.get_json()
+	if not data:
+		return jsonify({"error": "Invalid JSON data"}), 400
+
+	validated_data, error_response = validate_ticket_type_data(data, existing_type_id=type_id)
+	if error_response:
+		return error_response
+
+	# --- Update fields ---
+	for key, value in validated_data.items():
+		setattr(ticket_type, key, value)
+
+	db.session.commit()
+	return jsonify(ticket_type.to_dict()), 200
 
 @app.route('/api/ticket-types/<int:type_id>', methods=['DELETE'])
 def delete_ticket_type(type_id):

@@ -20,7 +20,7 @@ function App() {
   const [error, setError] = useState(null);
   const [view, setView] = useState(VIEW_ENUM.WALLETS);
 
-  // Fetch Wallets
+  // --- Fetch Wallets ---
   const fetchWallets = async () => {
     setIsLoading(true);
     setError(null);
@@ -39,12 +39,12 @@ function App() {
     }
   };
 
-  // Fetch Tickets for a selected wallet
+  // --- Fetch Tickets ---
   const fetchTickets = async (walletId) => {
     if (!walletId) return;
     setIsLoading(true);
     setError(null);
-    setTickets([]); // Clear previous tickets
+    setTickets([]);
     try {
       const response = await fetch(`${API_BASE_URL}/wallets/${walletId}/tickets`);
       if (!response.ok) {
@@ -60,11 +60,11 @@ function App() {
     }
   };
 
-  // Consume a ticket
+  // --- Consume Ticket ---
   const consumeTicket = async (ticketId) => {
-    // Optimistic UI update: remove ticket immediately
     const originalTickets = [...tickets];
     setTickets(currentTickets => currentTickets.filter(t => t.id !== ticketId));
+    setError(null); // Clear previous errors
 
     try {
       const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/consume`, {
@@ -74,20 +74,22 @@ function App() {
         const errorData = await response.json();
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
-      // Success: Ticket is already removed from local state
       console.log(`Ticket ${ticketId} consumed successfully.`);
-      // Optionally: show a success message
     } catch (e) {
       console.error(`Failed to consume ticket ${ticketId}:`, e);
       setError(`Failed to consume ticket: ${e.message}`);
-      // Rollback optimistic update on failure
-      setTickets(originalTickets);
+      setTickets(originalTickets); // Rollback
     }
   };
 
+  // --- Delete Wallet ---
   const handleDeleteWallet = async (walletId) => {
     console.log(`Attempting to delete wallet ID: ${walletId}`);
-    setError(null); // Clear previous errors
+    setError(null);
+
+    // Find the wallet name *before* deleting for confirmation/messages
+    const walletToDelete = wallets.find(w => w.id === walletId);
+    const walletName = walletToDelete ? walletToDelete.name : `ID ${walletId}`;
 
     try {
       const response = await fetch(`${API_BASE_URL}/wallets/${walletId}`, {
@@ -95,64 +97,122 @@ function App() {
       });
 
       if (!response.ok) {
-        // Try to parse error message from backend
         let errorMsg = `HTTP error! status: ${response.status}`;
         try {
           const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg; // Use backend error if available
+          errorMsg = errorData.error || errorMsg;
         } catch (parseError) {
-          // Ignore if response body isn't JSON
           console.error("Could not parse error response:", parseError);
         }
         throw new Error(errorMsg);
       }
 
-      // Success!
-      console.log(`Wallet ${walletId} deleted successfully.`);
-      // Update the local state to remove the wallet
+      console.log(`Wallet ${walletName} deleted successfully.`);
+      // Update local state
       setWallets(currentWallets => currentWallets.filter(w => w.id !== walletId));
-      // Navigate back to the wallet list view
+      // If the deleted wallet was selected, go back to the list
+      if (selectedWallet && selectedWallet.id === walletId) {
       handleBackToWallets();
+      }
 
     } catch (e) {
-      console.error(`Failed to delete wallet ${walletId}:`, e);
+      console.error(`Failed to delete wallet ${walletName}:`, e);
       setError(`Failed to delete wallet: ${e.message}`);
     }
   };
 
-  // Initial fetch of wallets on mount
+  const handleUpdateWallet = async (walletId, newName) => {
+    console.log(`Attempting to update wallet ID: ${walletId} to name: ${newName}`);
+    setError(null); // Clear previous global errors
+
+    // Optimistic UI update (optional but can feel faster)
+    const originalWallets = [...wallets];
+    const originalSelectedWallet = selectedWallet ? { ...selectedWallet } : null;
+
+    // Update state locally first
+    setWallets(currentWallets =>
+        currentWallets.map(w =>
+            w.id === walletId ? { ...w, name: newName } : w
+        )
+    );
+    if (selectedWallet && selectedWallet.id === walletId) {
+        setSelectedWallet(currentSelected => ({ ...currentSelected, name: newName }));
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/wallets/${walletId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name: newName }),
+        });
+
+        const data = await response.json(); // Get the updated wallet data or error
+
+        if (!response.ok) {
+            // Use error from API response if available
+            throw new Error(data.error || `HTTP error! status: ${response.status}`);
+        }
+
+        console.log(`Wallet ${walletId} updated successfully.`);
+        // API confirmed the update, local state is already updated (if optimistic)
+        // If not using optimistic update, update state here:
+        // setWallets(currentWallets => currentWallets.map(w => w.id === walletId ? data : w));
+        // if (selectedWallet && selectedWallet.id === walletId) {
+        //     setSelectedWallet(data);
+        // }
+
+        // No need to return anything specific, but throwing error signals failure
+    } catch (e) {
+        console.error(`Failed to update wallet ${walletId}:`, e);
+        setError(`Failed to update wallet: ${e.message}`); // Show error globally
+
+        // Rollback optimistic update on failure
+        setWallets(originalWallets);
+        if (originalSelectedWallet && selectedWallet && selectedWallet.id === originalSelectedWallet.id) {
+            setSelectedWallet(originalSelectedWallet);
+        }
+
+        // Re-throw the error so WalletView knows it failed
+        throw e;
+    }
+  };
+
+
+  // --- Initial Fetch ---
   useEffect(() => {
     fetchWallets();
   }, []);
 
-  // Handle selecting a wallet
+  // --- Navigation Handlers ---
   const handleSelectWallet = (wallet) => {
     setSelectedWallet(wallet);
     fetchTickets(wallet.id);
     setView(VIEW_ENUM.DETAIL);
+    setError(null); // Clear errors when navigating
   };
 
-  // Handle going back to wallet list
   const handleBackToWallets = () => {
     setSelectedWallet(null);
     setTickets([]);
     setView(VIEW_ENUM.WALLETS);
+    setError(null);
   };
 
-  // Handle navigation
   const navigateTo = (targetView) => {
     setView(targetView);
-    // Clear wallet selection if navigating away from detail
     if (targetView !== VIEW_ENUM.DETAIL) {
       setSelectedWallet(null);
       setTickets([]);
     }
-    // Fetch wallets if navigating back to the main list and it's empty
     if (targetView === VIEW_ENUM.WALLETS && wallets.length === 0) {
-      fetchWallets();
+      fetchWallets(); // Refetch if navigating back and list is empty
     }
+     setError(null); // Clear errors on navigation
   };
 
+  // --- Render Logic ---
   return (
     <div className={styles.appContainer}>
       <header className={styles.header}>
@@ -161,12 +221,14 @@ function App() {
           <button
             onClick={() => navigateTo(VIEW_ENUM.WALLETS)}
             disabled={view === VIEW_ENUM.WALLETS}
+            className={styles.navButton} // Add styles as needed
           >
             Wallets
           </button>
           <button
             onClick={() => navigateTo(VIEW_ENUM.TICKET_TYPES)}
             disabled={view === VIEW_ENUM.TICKET_TYPES}
+            className={styles.navButton} // Add styles as needed
           >
             Manage Ticket Types
           </button>
@@ -174,9 +236,11 @@ function App() {
       </header>
 
       <main className={styles.mainContent}>
+        {/* Global Loading/Error Display */}
         {isLoading && <div className={styles.loading}>Loading...</div>}
         {error && <div className={styles.error}>Error: {error} <button onClick={() => setError(null)}>Dismiss</button></div>}
 
+        {/* Conditional View Rendering */}
         {view === VIEW_ENUM.WALLETS && !selectedWallet && (
           <WalletList
             wallets={wallets}
@@ -193,16 +257,18 @@ function App() {
             tickets={tickets}
             onConsumeTicket={consumeTicket}
             onDeleteWallet={handleDeleteWallet}
+            onUpdateWallet={handleUpdateWallet} // Pass the new handler
             onBack={handleBackToWallets}
-            isLoading={isLoading}
+            isLoading={isLoading && tickets.length === 0} // Show loading only if tickets are loading
+            apiBaseUrl={API_BASE_URL} // Pass if needed
           />
         )}
 
         {view === VIEW_ENUM.TICKET_TYPES && (
           <TicketTypeManager
             apiBaseUrl={API_BASE_URL}
-            wallets={wallets}
-            onTicketTypesUpdated={() => { }} // Callback if needed
+            wallets={wallets} // Pass wallets for the dropdown
+            onTicketTypesUpdated={fetchWallets} // Optional: Refresh wallets if needed after TT changes
           />
         )}
       </main>
