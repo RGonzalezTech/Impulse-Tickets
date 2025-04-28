@@ -3,7 +3,7 @@ import TicketCard from './TicketCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './WalletView.module.css';
 
-function WalletView({ wallet, tickets, onConsumeTicket, onBack, isLoading }) {
+function WalletView({ wallet, tickets, onConsumeTicket, onBack, onDeleteWallet, isLoading }) {
 
     // Calculate rotation for fanning effect
     const calculateRotation = (index, total) => {
@@ -29,10 +29,30 @@ function WalletView({ wallet, tickets, onConsumeTicket, onBack, isLoading }) {
         return { x, y };
     };
 
+    const handleDeleteClick = () => {
+        // Add a confirmation dialog
+        if (window.confirm(`Are you sure you want to delete the wallet "${wallet.name}"? This action cannot be undone.`)) {
+            if (onDeleteWallet) { // Check if the prop is provided
+                onDeleteWallet(wallet.id);
+            } else {
+                console.error("onDeleteWallet prop not provided to WalletView");
+            }
+        }
+    };
+
     return (
         <div className={styles.walletViewContainer}>
             <button onClick={onBack} className={styles.backButton}>&larr; Back to Wallets</button>
             <h2>{wallet.name}'s Tickets</h2>
+            {onDeleteWallet && ( // Only render if onDeleteWallet is provided
+                <button
+                    onClick={handleDeleteClick}
+                    className={`${styles.button} ${styles.deleteButton}`} // Add specific styling if needed
+                    title={`Delete ${wallet.name} wallet`}
+                >
+                    Delete Wallet
+                </button>
+            )}
 
             {isLoading && !tickets.length && <p>Loading tickets...</p>}
             {!isLoading && tickets.length === 0 && <p>This wallet is empty.</p>}

@@ -85,6 +85,41 @@ function App() {
     }
   };
 
+  const handleDeleteWallet = async (walletId) => {
+    console.log(`Attempting to delete wallet ID: ${walletId}`);
+    setError(null); // Clear previous errors
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/wallets/${walletId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        // Try to parse error message from backend
+        let errorMsg = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.error || errorMsg; // Use backend error if available
+        } catch (parseError) {
+          // Ignore if response body isn't JSON
+          console.error("Could not parse error response:", parseError);
+        }
+        throw new Error(errorMsg);
+      }
+
+      // Success!
+      console.log(`Wallet ${walletId} deleted successfully.`);
+      // Update the local state to remove the wallet
+      setWallets(currentWallets => currentWallets.filter(w => w.id !== walletId));
+      // Navigate back to the wallet list view
+      handleBackToWallets();
+
+    } catch (e) {
+      console.error(`Failed to delete wallet ${walletId}:`, e);
+      setError(`Failed to delete wallet: ${e.message}`);
+    }
+  };
+
   // Initial fetch of wallets on mount
   useEffect(() => {
     fetchWallets();
@@ -157,6 +192,7 @@ function App() {
             wallet={selectedWallet}
             tickets={tickets}
             onConsumeTicket={consumeTicket}
+            onDeleteWallet={handleDeleteWallet}
             onBack={handleBackToWallets}
             isLoading={isLoading}
           />
