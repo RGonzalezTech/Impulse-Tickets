@@ -4,7 +4,13 @@ import WalletView from './components/WalletView';
 import TicketTypeManager from './components/TicketTypeManager'; // Placeholder
 import styles from './App.module.css';
 
-const API_BASE_URL = '/api'; // Adjust if your API runs elsewhere
+const API_BASE_URL = '/api';
+
+const VIEW_ENUM = {
+  WALLETS: 'wallets',
+  DETAIL: 'walletDetail',
+  TICKET_TYPES: 'ticketTypes',
+};
 
 function App() {
   const [wallets, setWallets] = useState([]);
@@ -12,7 +18,7 @@ function App() {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('wallets'); // 'wallets', 'walletDetail', 'ticketTypes'
+  const [view, setView] = useState(VIEW_ENUM.WALLETS);
 
   // Fetch Wallets
   const fetchWallets = async () => {
@@ -88,38 +94,47 @@ function App() {
   const handleSelectWallet = (wallet) => {
     setSelectedWallet(wallet);
     fetchTickets(wallet.id);
-    setView('walletDetail');
+    setView(VIEW_ENUM.DETAIL);
   };
 
   // Handle going back to wallet list
   const handleBackToWallets = () => {
     setSelectedWallet(null);
     setTickets([]);
-    setView('wallets');
+    setView(VIEW_ENUM.WALLETS);
   };
 
   // Handle navigation
   const navigateTo = (targetView) => {
     setView(targetView);
     // Clear wallet selection if navigating away from detail
-    if (targetView !== 'walletDetail') {
+    if (targetView !== VIEW_ENUM.DETAIL) {
       setSelectedWallet(null);
       setTickets([]);
     }
     // Fetch wallets if navigating back to the main list and it's empty
-    if (targetView === 'wallets' && wallets.length === 0) {
+    if (targetView === VIEW_ENUM.WALLETS && wallets.length === 0) {
       fetchWallets();
     }
   };
-
 
   return (
     <div className={styles.appContainer}>
       <header className={styles.header}>
         <h1>Impulse Ticket Manager</h1>
         <nav>
-          <button onClick={() => navigateTo('wallets')} disabled={view === 'wallets'}>Wallets</button>
-          <button onClick={() => navigateTo('ticketTypes')} disabled={view === 'ticketTypes'}>Manage Ticket Types</button>
+          <button
+            onClick={() => navigateTo(VIEW_ENUM.WALLETS)}
+            disabled={view === VIEW_ENUM.WALLETS}
+          >
+            Wallets
+          </button>
+          <button
+            onClick={() => navigateTo(VIEW_ENUM.TICKET_TYPES)}
+            disabled={view === VIEW_ENUM.TICKET_TYPES}
+          >
+            Manage Ticket Types
+          </button>
         </nav>
       </header>
 
@@ -127,17 +142,17 @@ function App() {
         {isLoading && <div className={styles.loading}>Loading...</div>}
         {error && <div className={styles.error}>Error: {error} <button onClick={() => setError(null)}>Dismiss</button></div>}
 
-        {view === 'wallets' && !selectedWallet && (
+        {view === VIEW_ENUM.WALLETS && !selectedWallet && (
           <WalletList
             wallets={wallets}
             onSelectWallet={handleSelectWallet}
-            onRefresh={fetchWallets} // Add a refresh button possibility
-            apiBaseUrl={API_BASE_URL} // Pass API URL for wallet creation
-            setWallets={setWallets} // Allow WalletList to update state after creation/deletion
+            onRefresh={fetchWallets}
+            apiBaseUrl={API_BASE_URL}
+            setWallets={setWallets}
           />
         )}
 
-        {view === 'walletDetail' && selectedWallet && (
+        {view === VIEW_ENUM.DETAIL && selectedWallet && (
           <WalletView
             wallet={selectedWallet}
             tickets={tickets}
@@ -147,10 +162,10 @@ function App() {
           />
         )}
 
-        {view === 'ticketTypes' && (
+        {view === VIEW_ENUM.TICKET_TYPES && (
           <TicketTypeManager
             apiBaseUrl={API_BASE_URL}
-            wallets={wallets} // Pass wallets for target selection
+            wallets={wallets}
             onTicketTypesUpdated={() => { }} // Callback if needed
           />
         )}
