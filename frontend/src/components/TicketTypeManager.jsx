@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from './TicketTypeManager.module.css';
 
 // Placeholder frequencies - match your API's FrequencyUnit enum
-const frequencyUnits = ['days', 'weeks', 'months'];
+const frequencyUnits = ['minutes', 'hours', 'days', 'weeks', 'months'];
 
 function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
     const [ticketTypes, setTicketTypes] = useState([]);

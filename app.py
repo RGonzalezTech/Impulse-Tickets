@@ -19,18 +19,11 @@ db = SQLAlchemy(app)
 
 # --- Enums ---
 class FrequencyUnit(enum.Enum):
+	MINUTES = 'minutes'
+	HOURS = 'hours'
 	DAYS = 'days'
 	WEEKS = 'weeks'
 	MONTHS = 'months'
-
-class DayOfWeek(enum.Enum):
-	MON = 'MON'
-	TUE = 'TUE'
-	WED = 'WED'
-	THU = 'THU'
-	FRI = 'FRI'
-	SAT = 'SAT'
-	SUN = 'SUN'
 
 # --- Database Models ---
 class Wallet(db.Model):
