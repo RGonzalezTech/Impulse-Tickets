@@ -1,28 +1,44 @@
-# Use an official Python runtime as a parent image
-FROM python:3.11-slim-bullseye
+# Dockerfile
 
-# Set the working directory in the container
+# --- Stage 1: Build React App ---
+FROM node:20 AS react-builder
+WORKDIR /app/frontend
+
+COPY ./frontend/package.json ./frontend/package-lock.json* ./
+RUN npm install
+COPY ./frontend /app/frontend
+RUN npm run build
+
+# --- Stage 2: Build Python/Flask App with Nginx ---
+FROM python:3.10-slim
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
 WORKDIR /app
 
-# Copy the requirements file into the container at /app
-COPY requirements.txt .
+RUN apt-get update && apt-get install -y nginx && apt-get clean
 
-# Install any needed packages specified in requirements.txt
-# --no-cache-dir reduces image size
+# Install Python dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application code into the container at /app
-COPY . .
+COPY app.py .
+COPY nginx.conf /etc/nginx/sites-available/default
+COPY --from=react-builder /app/frontend/dist /app/static/build
 
-# Make port 8000 available to the world outside this container
-EXPOSE 8000
+# Create directory for the database volume mount point if it doesn't exist
+RUN mkdir -p /app/data
 
-# Define environment variable to tell Flask the entry point
-ENV FLASK_APP=app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-# Default port for Flask app
-ENV FLASK_RUN_PORT=8000 
+# Expose the port Nginx will listen on (defined in nginx.conf)
+EXPOSE 80
 
-# Run app.py when the container launches using Flask's built-in server (good for dev/simple internal)
-# For slightly more robustness, consider Gunicorn: CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]
-CMD ["python", "app.py"]
+# Command to run Gunicorn (running Flask app) and Nginx
+# Use a simple script or run directly. Gunicorn runs in the background (&),
+# and Nginx stays in the foreground.
+CMD bash -c "echo 'Starting Gunicorn...' && \
+             (gunicorn --bind 127.0.0.1:8000 --workers=4 app:app &) && \
+             echo 'Initializing database...' && \
+             (sleep 5 && python -c 'from app import initialize_database; initialize_database()') & \
+             echo 'Starting Nginx...' && \
+             nginx -g 'daemon off;'"
