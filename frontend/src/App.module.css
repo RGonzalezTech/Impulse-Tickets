@@ -1,0 +1,93 @@
+/* Basic App Layout & Styling */
+.appContainer {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: #282c34;
+    /* Dark background */
+    color: white;
+    font-family: sans-serif;
+}
+
+.header {
+    background-color: #1e2128;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #444;
+}
+
+.header h1 {
+    margin: 0;
+    color: #61dafb;
+    /* React blue */
+}
+
+.header nav button {
+    background: none;
+    border: 1px solid #61dafb;
+    color: #61dafb;
+    padding: 0.5rem 1rem;
+    margin-left: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.header nav button:hover:not(:disabled) {
+    background-color: #61dafb;
+    color: #1e2128;
+}
+
+.header nav button:disabled {
+    border-color: #555;
+    color: #555;
+    cursor: not-allowed;
+}
+
+
+.mainContent {
+    flex-grow: 1;
+    padding: 2rem;
+    position: relative;
+    /* Needed for absolute positioning of loading/error */
+}
+
+.loading,
+.error {
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    z-index: 10;
+    text-align: center;
+}
+
+.loading {
+    background-color: rgba(255, 255, 0, 0.8);
+    color: #333;
+}
+
+.error {
+    background-color: rgba(255, 0, 0, 0.8);
+    color: white;
+}
+
+.error button {
+    margin-left: 10px;
+    padding: 2px 5px;
+    cursor: pointer;
+}
+
+
+.footer {
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: #aaa;
+    border-top: 1px solid #444;
+    margin-top: auto;
+    /* Pushes footer down */
+}

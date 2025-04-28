@@ -1,0 +1,148 @@
+.walletListContainer {
+    padding: 1rem;
+}
+
+.walletListContainer h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #eee;
+    margin-bottom: 1.5rem;
+}
+
+.walletListContainer h2 button {
+    background: none;
+    border: none;
+    color: #61dafb;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.walletListContainer h2 button:hover {
+    color: #fff;
+}
+
+
+.addWalletForm {
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.addWalletForm input {
+    padding: 0.6rem;
+    border: 1px solid #555;
+    background-color: #333;
+    color: white;
+    border-radius: 4px;
+    flex-grow: 1;
+    /* Take available space */
+}
+
+.addWalletForm button {
+    padding: 0.6rem 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.addWalletForm button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.addWalletForm button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.errorText {
+    color: #ff4d4d;
+    font-size: 0.9em;
+    margin-left: 10px;
+    /* Adjust spacing */
+}
+
+
+.walletsDisplay {
+    display: flex;
+    flex-wrap: wrap;
+    /* Allow wrapping */
+    gap: 20px;
+    /* Gap between items */
+    justify-content: center;
+    /* Center items */
+    align-items: flex-start;
+    /* Align items to the top */
+    min-height: 200px;
+    /* Ensure container has some height */
+    padding-left: 80px;
+    /* Offset start to accommodate stacking illusion */
+    margin-top: 30px;
+    /* Space below form */
+}
+
+.walletDeck {
+    width: 150px;
+    /* Width of the 'deck' */
+    height: 210px;
+    /* Height of the 'deck' */
+    position: relative;
+    /* Needed for positioning pseudo-elements/children */
+    cursor: pointer;
+    transition: transform 0.3s ease, margin 0.3s ease;
+    /* Smooth transitions */
+    margin-bottom: 20px;
+    /* Space between rows if wrapping */
+}
+
+.walletTopCard {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #4a90e2 0%, #50e3c2 100%);
+    /* Example gradient */
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.2rem;
+    font-weight: bold;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    /* Top card is highest */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Pseudo-elements or divs for stacked card effect */
+.walletCardStack {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #4480c4 0%, #48c4a9 100%);
+    /* Slightly darker */
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stack2 {
+    z-index: 2;
+    transform: translate(4px, 4px);
+    /* Offset back and down */
+}
+
+.stack3 {
+    z-index: 1;
+    transform: translate(8px, 8px);
+    /* Offset further */
+}

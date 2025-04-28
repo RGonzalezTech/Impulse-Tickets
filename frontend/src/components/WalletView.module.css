@@ -1,0 +1,51 @@
+.walletViewContainer {
+    padding: 1rem;
+    text-align: center;
+    /* Center the fan */
+}
+
+.backButton {
+    background: none;
+    border: 1px solid #61dafb;
+    color: #61dafb;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1.5rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    position: absolute;
+    /* Position relative to main content area */
+    top: 1.5rem;
+    left: 1.5rem;
+}
+
+.backButton:hover {
+    background-color: #61dafb;
+    color: #1e2128;
+}
+
+.walletViewContainer h2 {
+    margin-bottom: 3rem;
+    /* More space before the fan */
+    color: #eee;
+}
+
+.ticketFanContainer {
+    position: relative;
+    /* Crucial for positioning the cards */
+    min-height: 300px;
+    /* Give space for the fan */
+    display: flex;
+    justify-content: center;
+    /* Center the fan horizontally */
+    align-items: center;
+    /* Align cards vertically in the center */
+    margin-top: 50px;
+    /* Add some top margin */
+    padding-bottom: 50px;
+    /* Add space below the fan */
+    perspective: 1000px;
+    /* Add perspective for 3D effects if needed later */
+}
+
+/* Individual cards will be positioned absolutely by TicketCard/motion */

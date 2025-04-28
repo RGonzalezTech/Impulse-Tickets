@@ -1,0 +1,168 @@
+.managerContainer {
+    padding: 1rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.managerContainer h2,
+.managerContainer h3 {
+    color: #eee;
+    border-bottom: 1px solid #555;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.managerContainer h3 {
+    margin-top: 2rem;
+}
+
+.errorText {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: #ffcccc;
+    border: 1px solid rgba(255, 0, 0, 0.5);
+    padding: 0.8rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dismissError {
+    background: none;
+    border: none;
+    color: #ffcccc;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+
+/* Add Form Styling */
+.addForm {
+    background-color: #3a3f4a;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    /* Label, Control */
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.formGrid label {
+    text-align: right;
+    color: #ccc;
+    font-weight: bold;
+}
+
+.formGrid input[type="text"],
+.formGrid input[type="number"],
+.formGrid select {
+    padding: 0.6rem;
+    border: 1px solid #555;
+    background-color: #444954;
+    color: white;
+    border-radius: 4px;
+    width: 100%;
+    /* Ensure inputs fill grid cell */
+    box-sizing: border-box;
+}
+
+.frequencyControl {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ccc;
+}
+
+.frequencyControl input[type="number"] {
+    width: 60px;
+    /* Smaller width for number input */
+}
+
+.addForm button {
+    padding: 0.7rem 1.5rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: block;
+    /* Center button or align as needed */
+    margin: 0 auto;
+    /* Center */
+}
+
+.addForm button:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.addForm button:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+/* List Section Styling */
+.listSection {
+    margin-top: 2rem;
+}
+
+.typeList {
+    list-style: none;
+    padding: 0;
+}
+
+.typeItem {
+    background-color: #3a3f4a;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #61dafb;
+    /* Accent color */
+}
+
+.typeDetails strong {
+    color: #fff;
+    font-size: 1.1em;
+}
+
+.typeDetails .description {
+    color: #bbb;
+    font-style: italic;
+    font-size: 0.9em;
+}
+
+.typeDetails .targetWallet {
+    color: #aaddff;
+    /* Light blue for target */
+    font-size: 0.9em;
+    display: block;
+    /* New line */
+    margin-top: 4px;
+}
+
+
+.deleteButton {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.9em;
+}
+
+.deleteButton:hover {
+    background-color: #c82333;
+}

@@ -1,0 +1,81 @@
+.ticketCard {
+    width: 150px;
+    height: 210px;
+    background: linear-gradient(to bottom right, #ffffff, #e6e6e6);
+    /* Light card */
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border: 1px solid #ccc;
+    position: absolute;
+    /* Key for fanning layout */
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* Pushes button to bottom */
+    padding: 15px;
+    box-sizing: border-box;
+    /* Include padding in width/height */
+    color: #333;
+    /* Ensure transforms originate from the bottom center for a nice fan */
+    transform-origin: bottom center;
+    overflow: hidden;
+    /* Hide anything that might overflow */
+}
+
+.cardContent {
+    text-align: center;
+}
+
+.ticketName {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 0 0 10px 0;
+    color: #0056b3;
+    /* Dark blue */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ticketInfo {
+    font-size: 0.8rem;
+    color: #555;
+    margin: 5px 0;
+}
+
+.ticketId {
+    font-size: 0.7rem;
+    color: #888;
+    margin-top: 10px;
+}
+
+
+.consumeButton {
+    width: calc(100% + 30px);
+    /* Make slightly wider than padding */
+    margin: 15px -15px -15px -15px;
+    /* Pull to edges */
+    padding: 10px 0;
+    background-color: #28a745;
+    /* Green */
+    color: white;
+    border: none;
+    /* border-radius: 0 0 10px 10px; */
+    /* Round bottom corners if needed */
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+    border-top: 1px solid #ccc;
+    /* Separator line */
+}
+
+.consumeButton:hover {
+    background-color: #218838;
+    /* Darker green */
+}
+
+.consumeButton:active {
+    transform: scale(0.98);
+    /* Slight shrink on click */
+}
