@@ -101,14 +101,11 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
                 throw new Error(errorMsg);
             }
 
+            fetchTicketTypes()
             if (isEditing) {
-                // Update the type in the local state
-                fetchTicketTypes()
                 // Reset editing state after successful update
                 handleCancelEdit(); // Call reset function (defined below)
             } else {
-                // Add the new type to the local state
-                fetchTicketTypes()
                 resetForm(); // Reset form fields only for adding
             }
 
