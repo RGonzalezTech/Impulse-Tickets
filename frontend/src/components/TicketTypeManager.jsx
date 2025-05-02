@@ -180,6 +180,7 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
 
                     <label>Target Wallet:</label>
                     <select value={targetWalletId} onChange={e => setTargetWalletId(e.target.value)}>
+                        <option value="">All Wallets</option>
                         {wallets.map(wallet => (
                             <option key={wallet.id} value={wallet.id}>{wallet.name}</option>
                         ))}
@@ -210,7 +211,7 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
                                 {tt.description && <span className={styles.description}> - {tt.description}</span>}
                                 <br />
                                 <span className={styles.targetWallet}>
-                                    Target: {tt.target_wallet_name || '(None)'}
+                                    Target: {tt.target_wallet_name || '(All Wallets)'}
                                 </span>
                             </div>
                             <div className={styles.buttonGroup}>
