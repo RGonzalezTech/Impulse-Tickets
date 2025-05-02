@@ -149,7 +149,7 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
     // Fetch on mount
     useEffect(() => {
         fetchTicketTypes();
-    }, [fetchTicketTypes]); // Run only once on mount
+    }, []); // Run only once on mount
 
     // --- Helper Function for Time Difference Formatting ---
     const formatTimeDifference = (diffMs) => {
