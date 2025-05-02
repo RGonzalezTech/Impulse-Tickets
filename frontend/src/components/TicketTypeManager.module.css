@@ -166,3 +166,45 @@
 .deleteButton:hover {
     background-color: #c82333;
 }
+
+/* Add this to TicketTypeManager.module.css */
+.countdown {
+    margin-left: 10px;
+    /* Add some space */
+    font-style: italic;
+    color: #555;
+    /* Example color */
+    font-size: 0.9em;
+    /* Slightly smaller text */
+}
+
+/* You might want to adjust the typeDetails for better layout */
+.typeDetails {
+    flex-grow: 1;
+    /* Allow details to take up space */
+    margin-right: 10px;
+    /* Space before buttons */
+    /* Remove display: flex; if you added it previously for side-by-side */
+}
+
+.typeDetails>div {
+    /* Style the inner divs we added */
+    margin-bottom: 4px;
+    /* Add a little space between lines */
+}
+
+.typeDetails>div:last-child {
+    margin-bottom: 0;
+    /* No bottom margin on the last line */
+}
+
+/* Adjust existing styles if needed */
+.typeItem {
+    display: flex;
+    /* Keep items side-by-side */
+    justify-content: space-between;
+    align-items: center;
+    /* Align items vertically */
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}

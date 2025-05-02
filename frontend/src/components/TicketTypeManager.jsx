@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from './TicketTypeManager.module.css';
 
 // Placeholder frequencies - match your API's FrequencyUnit enum
@@ -19,9 +19,8 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
     const [targetWalletId, setTargetWalletId] = useState(''); // Store as string for select value
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-
     // Fetch Ticket Types
-    const fetchTicketTypes = async () => {
+    const fetchTicketTypes = useCallback(async () => {
         setIsLoading(true);
         setError(null);
         try {
@@ -30,14 +29,21 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            setTicketTypes(data);
+            // Calculate next distribution time for each type upon fetching
+            const typesWithNextDist = data.map(tt => ({
+                ...tt,
+                // Call the helper function here
+                nextDistributionTime: calculateNextDistribution(tt)
+            }));
+            // Set the state with the augmented data
+            setTicketTypes(typesWithNextDist);
         } catch (e) {
             console.error("Failed to fetch ticket types:", e);
             setError('Could not load ticket types.');
         } finally {
             setIsLoading(false);
         }
-    };
+    });
 
     // Delete Ticket Type
     const deleteTicketType = async (typeId) => {
@@ -97,15 +103,12 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
 
             if (isEditing) {
                 // Update the type in the local state
-                setTicketTypes(currentTypes =>
-                    currentTypes.map(tt => (tt.id === editingTypeId ? data : tt))
-                );
+                fetchTicketTypes()
                 // Reset editing state after successful update
                 handleCancelEdit(); // Call reset function (defined below)
-
             } else {
                 // Add the new type to the local state
-                setTicketTypes(currentTypes => [...currentTypes, data]);
+                fetchTicketTypes()
                 resetForm(); // Reset form fields only for adding
             }
 
@@ -149,7 +152,106 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
     // Fetch on mount
     useEffect(() => {
         fetchTicketTypes();
-    }, []); // Run only once on mount
+    }, [fetchTicketTypes]); // Run only once on mount
+
+    // --- Helper Function for Time Difference Formatting ---
+    const formatTimeDifference = (diffMs) => {
+        if (diffMs <= 0) {
+            return "Ready";
+        }
+
+        const totalSeconds = Math.floor(diffMs / 1000);
+        const totalMinutes = Math.floor(totalSeconds / 60);
+        const totalHours = Math.floor(totalMinutes / 60);
+        const days = Math.floor(totalHours / 24);
+
+        const seconds = totalSeconds % 60;
+        const minutes = totalMinutes % 60;
+        const hours = totalHours % 24;
+
+        let parts = [];
+        if (days > 0) parts.push(`${days}d`);
+        if (hours > 0) parts.push(`${hours}h`);
+        if (minutes > 0) parts.push(`${minutes}m`);
+        // Optionally add seconds: if (seconds > 0 && parts.length < 2) parts.push(`${seconds}s`);
+
+        if (parts.length === 0) {
+            return "Less than a minute";
+        }
+
+        return parts.join(' ');
+    };
+
+    // --- Helper Function to Calculate Next Distribution Time ---
+    const calculateNextDistribution = (ticketType) => {
+        if (!ticketType.last_distributed)
+            return null; // Never distributed before, maybe show "Ready"? Or calculate based on creation? For now, null.
+
+        const lastDistributedDate = new Date(ticketType.last_distributed);
+        if (isNaN(lastDistributedDate)) {
+            console.error("Invalid last_distributed date:", ticketType.last_distributed);
+            return null; // Invalid date
+        }
+
+        const value = ticketType.frequency_value;
+        const unit = ticketType.frequency_unit;
+        let nextDistributionDate = new Date(lastDistributedDate);
+
+        // Note: 'months' is tricky due to variable days. This is an approximation.
+        // Consider using a date library like date-fns or moment for more robust calculations.
+        switch (unit) {
+            case 'minutes':
+                nextDistributionDate.setMinutes(nextDistributionDate.getMinutes() + value);
+                break;
+            case 'hours':
+                nextDistributionDate.setHours(nextDistributionDate.getHours() + value);
+                break;
+            case 'days':
+                nextDistributionDate.setDate(nextDistributionDate.getDate() + value);
+                break;
+            case 'weeks':
+                nextDistributionDate.setDate(nextDistributionDate.getDate() + value * 7);
+                break;
+            case 'months': // Approximation
+                nextDistributionDate.setMonth(nextDistributionDate.getMonth() + value);
+                break;
+            default:
+                console.error("Unknown frequency unit:", unit);
+                return null; // Unknown unit
+        }
+        return nextDistributionDate;
+    }
+
+    // --- Countdown Display Component ---
+    function CountdownTimer({ nextDistributionTime }) {
+        const [now, setNow] = useState(new Date());
+
+        useEffect(() => {
+            if (!nextDistributionTime) return; // Don't start interval if no target time
+
+            // Update every minute. If you need seconds, change to 1000.
+            const intervalId = setInterval(() => {
+                setNow(new Date());
+            }, 60000);
+
+            // Clear interval on component unmount
+            return () => clearInterval(intervalId);
+        }, [nextDistributionTime]); // Re-run effect if nextDistributionTime changes
+
+        if (!nextDistributionTime) {
+            // Handle cases where distribution hasn't happened or calculation failed
+            return <span className={styles.countdown}>Ready</span>; // Or null, or ""
+        }
+
+        const diffMs = nextDistributionTime.getTime() - now.getTime();
+
+        return (
+            <span className={styles.countdown}>
+                {/* Adjust format/text as needed */}
+                {diffMs > 0 ? `Next in: ${formatTimeDifference(diffMs)}` : "Ready"}
+            </span>
+        );
+    }
 
     return (
         <div className={styles.managerContainer}>
@@ -213,6 +315,7 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
                                 <span className={styles.targetWallet}>
                                     Target: {tt.target_wallet_name || '(All Wallets)'}
                                 </span>
+                                <CountdownTimer nextDistributionTime={tt.nextDistributionTime} />
                             </div>
                             <div className={styles.buttonGroup}>
                                 <button
@@ -231,6 +334,6 @@ function TicketTypeManager({ apiBaseUrl, wallets, onTicketTypesUpdated }) {
             </div>
         </div>
     );
-}
+};
 
 export default TicketTypeManager;
