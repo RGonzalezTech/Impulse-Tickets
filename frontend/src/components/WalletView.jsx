@@ -17,6 +17,7 @@ function WalletView({
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(wallet ? wallet.name : '');
     const [editError, setEditError] = useState(null); // Local error state for editing
+    const [activeTicketId, setActiveTicketId] = useState(null);
 
     // Update newName if the wallet prop changes (e.g., after successful save)
     useEffect(() => {
@@ -25,6 +26,11 @@ function WalletView({
         }
     }, [wallet]);
 
+    const handleTicketClick = (ticketId) => {
+        // If clicking active, unset active
+        // Else, set active
+        setActiveTicketId(activeTicketId === ticketId ? null : ticketId);
+    };
 
     // --- Existing Calculation Functions (Unchanged) ---
     const calculateRotation = (index, total) => {
@@ -166,22 +172,25 @@ function WalletView({
                     {tickets.map((ticket, index) => {
                         const rotation = calculateRotation(index, tickets.length);
                         const { x, y } = calculateTranslation(index, tickets.length);
+                        const isActive = activeTicketId === ticket.id; // Determine if this card is the active one
 
                         return (
                             <TicketCard
                                 key={ticket.id}
                                 ticket={ticket}
                                 onConsume={() => onConsumeTicket(ticket.id)}
-                                style={{ zIndex: index }}
+                                onClick={() => handleTicketClick(ticket.id)}
+                                isActive={isActive} // Pass the active state
                                 animate={{
                                     rotate: rotation,
                                     x: x,
-                                    y: y,
-                                    transition: { type: 'spring', stiffness: 100, damping: 15, delay: index * 0.05 }
+                                    y: isActive ? y - 20 : y, // Lift the active card slightly more
+                                    scale: isActive ? 1.15 : 1, // Scale up the active card
+                                    zIndex: isActive ? tickets.length + 1 : index, // Ensure active card is on top
+                                    transition: { type: 'spring', stiffness: 120, damping: 15, delay: index * 0.05 }
                                 }}
-                                initial={{ rotate: 0, x: 0, y: 50 }}
-                                exit={{ scale: 0.5, y: -100, transition: { duration: 0.4, ease: "easeIn" } }}
-                                layout
+                                initial={{ rotate: 0, x: 0, y: 50, scale: 1 }} // Initial state
+                                exit={{ scale: 0.5, y: -100, opacity: 0, transition: { duration: 0.4, ease: "easeIn" } }}
                             />
                         );
                     })}

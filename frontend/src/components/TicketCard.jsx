@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import styles from './TicketCard.module.css';
 
 // Forwarding ref is necessary for framer-motion's layout animations
-const TicketCard = React.forwardRef(({ ticket, onConsume, style, ...motionProps }, ref) => {
+const TicketCard = React.forwardRef(({ ticket, onConsume, style, onClick, isActive, ...motionProps }, ref) => {
     const handleConsumeClick = (e) => {
         e.stopPropagation(); // Prevent triggering any parent onClick if needed
         onConsume();
@@ -28,8 +28,8 @@ const TicketCard = React.forwardRef(({ ticket, onConsume, style, ...motionProps 
             ref={ref} // Attach the ref here
             className={styles.ticketCard}
             style={style} // Pass style for positioning/rotation from parent
-            whileHover={{ scale: 1.1, y: (style?.y || 0) - 10, zIndex: 100 }} // Lift card on hover
-            whileTap={{ scale: 0.95 }}
+            onClick={onClick}
+            whileHover={ !isActive ? { scale: 1.1, zIndex: 100 } : {} }
             {...motionProps} // Spread the rest of the framer-motion props (animate, initial, exit, etc.)
         >
             <div className={styles.cardContent}>
