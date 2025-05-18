@@ -68,81 +68,32 @@
     /* Adjust spacing */
 }
 
-
 .walletsDisplay {
     display: flex;
-    flex-wrap: wrap;
-    /* Allow wrapping */
-    gap: 20px;
-    /* Gap between items */
-    justify-content: center;
-    /* Center items */
-    align-items: flex-start;
-    /* Align items to the top */
-    min-height: 200px;
-    /* Ensure container has some height */
-    padding-left: 80px;
-    /* Offset start to accommodate stacking illusion */
-    margin-top: 30px;
-    /* Space below form */
+    flex-direction: column; /* For a vertical list */
+    /* or: display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); for a responsive grid */
+    gap: 15px; /* Adjust gap as needed */
+    margin-top: 20px; /* Adjust as needed */
+    /* padding-left: 80px; -- REMOVED */
 }
 
-.walletDeck {
-    width: 150px;
-    /* Width of the 'deck' */
-    height: 210px;
-    /* Height of the 'deck' */
-    position: relative;
-    /* Needed for positioning pseudo-elements/children */
-    cursor: pointer;
-    transition: transform 0.3s ease, margin 0.3s ease;
-    /* Smooth transitions */
-    margin-bottom: 20px;
-    /* Space between rows if wrapping */
-}
-
-.walletTopCard {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #4a90e2 0%, #50e3c2 100%);
-    /* Example gradient */
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.walletItem { /* New or modified from walletDeck and walletTopCard */
+    background: linear-gradient(135deg, #4a90e2 0%, #50e3c2 100%); /* Example background */
+    border-radius: 8px; /* Slightly simpler radius */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Simpler shadow */
+    padding: 1rem; /* Add padding */
     color: white;
-    font-size: 1.2rem;
+    font-size: 1.1rem; /* Adjust as needed */
     font-weight: bold;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 3;
-    /* Top card is highest */
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Optional: subtle hover effect */
+    display: flex; /* To align content within the item if needed */
+    justify-content: space-between; /* Example: if you add more info like balance */
+    align-items: center;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
 }
 
-/* Pseudo-elements or divs for stacked card effect */
-.walletCardStack {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #4480c4 0%, #48c4a9 100%);
-    /* Slightly darker */
-    border-radius: 10px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.stack2 {
-    z-index: 2;
-    transform: translate(4px, 4px);
-    /* Offset back and down */
-}
-
-.stack3 {
-    z-index: 1;
-    transform: translate(8px, 8px);
-    /* Offset further */
+.walletItem:hover { /* Optional hover effect */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }

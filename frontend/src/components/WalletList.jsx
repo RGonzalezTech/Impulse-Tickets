@@ -36,14 +36,6 @@ function WalletList({ wallets, onSelectWallet, onRefresh, apiBaseUrl, setWallets
         }
     };
 
-    // Very basic card deck appearance
-    const getWalletStyle = (index) => ({
-        zIndex: wallets.length - index,
-        // Slight offset for stacking illusion
-        marginLeft: index > 0 ? `-${(wallets.length - index) * 0 + 75}px` : '0px',
-        marginTop: index > 0 ? `${index * 5}px` : '0px', // Add some vertical offset too
-    });
-
     return (
         <div className={styles.walletListContainer}>
             <h2>Your Wallets <button onClick={onRefresh} title="Refresh Wallets">&#x21bb;</button></h2>
@@ -68,21 +60,13 @@ function WalletList({ wallets, onSelectWallet, onRefresh, apiBaseUrl, setWallets
                 {wallets.map((wallet, index) => (
                     <motion.div
                         key={wallet.id}
-                        className={styles.walletDeck}
-                        style={getWalletStyle(index)}
-                        initial={{ opacity: 0, y: 50 }}
+                        className={styles.walletItem} // Renamed from walletDeck for clarity, new CSS class
+                        initial={{ opacity: 0, y: 20 }} // Optional: simpler animation
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1, duration: 0.5 }}
-                        whileHover={{ scale: 1.05, zIndex: wallets.length + 1, x: 10 }} // Bring to front and scale on hover
+                        transition={{ delay: index * 0.05, duration: 0.3 }} // Optional: simpler animation
                         onClick={() => onSelectWallet(wallet)}
                     >
-                        <div className={styles.walletTopCard}>
-                            <span>{wallet.name}</span>
-                            {/* Maybe show ticket count here if available */}
-                        </div>
-                        {/* Static representation of stacked cards */}
-                        <div className={`${styles.walletCardStack} ${styles.stack2}`}></div>
-                        <div className={`${styles.walletCardStack} ${styles.stack3}`}></div>
+                        <span>{wallet.name}</span>
                     </motion.div>
                 ))}
             </div>
